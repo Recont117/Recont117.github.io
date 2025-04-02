@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carrito de Compras e Inicio de Sesión</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .btn {
+      width: 100%;
+      background-color: #6f42c1;
+      color: white;
+      border: none;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .btn:hover {
+      background-color: #5a32a3;
+    }
+    /* Estilos para la tabla del carrito */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .product-img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+    }
+    /* Estilos para el grid de productos */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .product-card {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 10px;
+      text-align: center;
+      background: #fff;
+    }
+    .product-card img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+    }
+    /* Estilos para mensajes */
+    .message {
+      display: none;
+      padding: 10px;
+      margin: 10px 0;
+      background: #4CAF50;
+      color: white;
+      border-radius: 5px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Login -->
+  <div class="container" id="login-container">
+    <h2>Inicio de Sesión</h2>
+    <input type="text" id="usuario" placeholder="Usuario">
+    <input type="password" id="contrasena" placeholder="Contraseña">
+    <button class="btn" onclick="iniciarSesion()">Ingresar</button>
+    <button class="btn" onclick="mostrarRegistro()">Registrarse</button>
+  </div>
+
+  <!-- Registro -->
+  <div class="container" id="registro-container" style="display: none;">
+    <h2>Registro</h2>
+    <input type="text" id="nuevoUsuario" placeholder="Nuevo usuario">
+    <input type="password" id="nuevaContrasena" placeholder="Nueva contraseña">
+    <button class="btn" onclick="registrarse()">Registrarse</button>
+    <button class="btn" onclick="mostrarLogin()">Volver</button>
+  </div>
+
+  <!-- Carrito y productos -->
+  <div class="container" id="carrito-container" style="display: none;">
+    <h1>Carrito de Compras</h1>
+    <input type="text" id="busqueda" placeholder="Buscar producto..." onkeyup="filtrarProductos()">
+    <div class="product-grid" id="productos-grid"></div>
+    <h2>Carrito</h2>
+    <table id="tabla-carrito">
+      <thead>
+        <tr>
+          <th>Imagen</th>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <h3>Total: $<span id="total">0</span></h3>
+    <button class="btn" onclick="vaciarCarrito()">Vaciar Carrito</button>
+    
+    <!-- Métodos de Pago -->
+    <h2>Método de Pago</h2>
+    <select id="metodo-pago">
+      <option value="">Seleccione un método</option>
+      <option value="paypal">PayPal</option>
+      <option value="efecty">Efecty</option>
+      <option value="nequi">Nequi</option>
+      <option value="daviplata">Daviplata</option>
+      <option value="bancolombia">Bancolombia</option>
+    </select>
+    <button class="btn" onclick="realizarPago()">Realizar Pago</button>
+    <div class="message" id="mensaje"></div>
+  </div>
+
+  <script>
+    // Datos iniciales de productos
+    const productos = [
+      { id: 1, nombre: "DOOM", seccion: "Sección A", precio: 40000, imagen: "doom.jpg" },
+      { id: 2, nombre: "GTA V", seccion: "Sección B", precio: 150000, imagen: "GTA V.png" },
+      { id: 3, nombre: "PAYDAY", seccion: "Sección C", precio: 30000, imagen: "payday.jpg" },
+      { id: 4, nombre: "HALO", seccion: "Sección A", precio: 250000, imagen: "HALO.jpg" },
+      { id: 5, nombre: "UNCHARTED", seccion: "Sección B", precio: 150000, imagen: "uncharted.jpg" },
+      { id: 6, nombre: "FARMING SIMULATOR", seccion: "Sección C", precio: 180000, imagen: "farming.jpg" },
+      { id: 7, nombre: "COD MDF 3", seccion: "Sección A", precio: 250000, imagen: "cod.jpg" },
+      { id: 8, nombre: "JUST CAUSE 3", seccion: "Sección B", precio: 80000, imagen: "just_cause.jpg" },
+      { id: 9, nombre: "FARCRY 6", seccion: "Sección C", precio: 350000, imagen: "farcry.jpg" },
+      { id: 10, nombre: "BATTLEFIELD", seccion: "Sección A", precio: 60000, imagen: "battlefield.jpg" },
+      { id: 11, nombre: "INFAMOUS", seccion: "Sección B", precio: 18000, imagen: "infamous.jpg" },
+      { id: 12, nombre: "GHOST RECON", seccion: "Sección C", precio: 220000, imagen: "ghost.jpg" },
+      { id: 13, nombre: "FC 25", seccion: "Sección A", precio: 350000, imagen: "fc25.jpg" },
+      { id: 14, nombre: "DAYS GONE", seccion: "Sección B", precio: 150000, imagen: "daysgone.jpg" },
+      { id: 15, nombre: "THE WALKING DEAD", seccion: "Sección C", precio: 120000, imagen: "walking.jpg" },
+      { id: 16, nombre: "AMERICAN TRUCK SIMULATOR", seccion: "Sección A", precio: 200000, imagen: "american.jpg" },
+      { id: 17, nombre: "DEAD ISLAND", seccion: "Sección B", precio: 90000, imagen: "deas.jpg" },
+      { id: 18, nombre: "ARMA 3", seccion: "Sección C", precio: 50000, imagen: "arma3.jpg" },
+      { id: 19, nombre: "ARMY OF TWO", seccion: "Sección A", precio: 28000, imagen: "army.jpg" },
+      { id: 20, nombre: "HITMAN", seccion: "Sección B", precio: 160000, imagen: "hitman.jpg" }
+    ];
+
+    // Variables globales y persistencia
+    let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+    let usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+
+    // Función para mostrar mensajes
+    function mostrarMensaje(texto) {
+      const mensaje = document.getElementById('mensaje');
+      mensaje.textContent = texto;
+      mensaje.style.display = 'block';
+      setTimeout(() => mensaje.style.display = 'none', 3000);
+    }
+
+    // Funciones para mostrar y ocultar secciones
+    function mostrarRegistro() {
+      document.getElementById('login-container').style.display = 'none';
+      document.getElementById('registro-container').style.display = 'block';
+    }
+
+    function mostrarLogin() {
+      document.getElementById('registro-container').style.display = 'none';
+      document.getElementById('login-container').style.display = 'block';
+    }
+
+    // Registro de usuario (se persiste en localStorage)
+    function registrarse() {
+      const usuario = document.getElementById('nuevoUsuario').value.trim();
+      const contrasena = document.getElementById('nuevaContrasena').value.trim();
+      if (!usuario || !contrasena) {
+        mostrarMensaje('Complete todos los campos para registrarse');
+        return;
+      }
+      if (usuarios.some(u => u.usuario === usuario)) {
+        mostrarMensaje('El usuario ya existe');
+        return;
+      }
+      usuarios.push({ usuario, contrasena });
+      localStorage.setItem('usuarios', JSON.stringify(usuarios));
+      mostrarMensaje('Usuario registrado correctamente');
+      mostrarLogin();
+    }
+
+    // Inicio de sesión (validación simple)
+    function iniciarSesion() {
+      const usuario = document.getElementById('usuario').value.trim();
+      const contrasena = document.getElementById('contrasena').value.trim();
+      if (!usuario || !contrasena) {
+        mostrarMensaje('Por favor, ingrese un usuario y contraseña válidos');
+        return;
+      }
+      if (!usuarios.some(u => u.usuario === usuario && u.contrasena === contrasena)) {
+        mostrarMensaje('Usuario o contraseña incorrectos');
+        return;
+      }
+      // Guardar usuario activo (opcional)
+      localStorage.setItem('usuarioActivo', usuario);
+      mostrarMensaje('Inicio de sesión exitoso');
+      document.getElementById('login-container').style.display = 'none';
+      document.getElementById('carrito-container').style.display = 'block';
+      mostrarProductos();
+      actualizarCarrito();
+    }
+
+    // Muestra los productos en formato grid
+    function mostrarProductos() {
+      const productosGrid = document.getElementById('productos-grid');
+      productosGrid.innerHTML = "";
+      productos.forEach(prod => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <img src="${prod.imagen}" alt="${prod.nombre}">
+          <h3>${prod.nombre}</h3>
+          <p>${prod.seccion}</p>
+          <p>$${prod.precio}</p>
+          <button class="btn" onclick="agregarAlCarrito(${prod.id})">Agregar</button>
+        `;
+        productosGrid.appendChild(card);
+      });
+    }
+
+    // Filtra productos por nombre según búsqueda
+    function filtrarProductos() {
+      const query = document.getElementById('busqueda').value.toLowerCase();
+      const cards = document.querySelectorAll('.product-card');
+      cards.forEach(card => {
+        const nombre = card.querySelector('h3').textContent.toLowerCase();
+        if(nombre.includes(query)) {
+          card.style.display = 'block';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // Agregar producto al carrito (incrementa cantidad si ya existe)
+    function agregarAlCarrito(id) {
+      const producto = productos.find(p => p.id === id);
+      const index = carrito.findIndex(item => item.id === id);
+      if (index !== -1) {
+        carrito[index].cantidad++;
+      } else {
+        carrito.push({ ...producto, cantidad: 1 });
+      }
+      localStorage.setItem('carrito', JSON.stringify(carrito));
+      actualizarCarrito();
+      mostrarMensaje('Producto agregado al carrito');
+    }
+
+    // Actualiza la visualización del carrito y total
+    function actualizarCarrito() {
+      const tablaCarrito = document.getElementById('tabla-carrito').getElementsByTagName('tbody')[0];
+      tablaCarrito.innerHTML = "";
+      let total = 0;
+      carrito.forEach((item, index) => {
+        total += item.precio * item.cantidad;
+        let fila = tablaCarrito.insertRow();
+        fila.innerHTML = `
+          <td><img src="${item.imagen}" class="product-img"></td>
+          <td>${item.nombre}</td>
+          <td>${item.cantidad}</td>
+          <td>$${item.precio * item.cantidad}</td>
+          <td><button class="btn" onclick="eliminarProducto(${index})">Eliminar</button></td>
+        `;
+      });
+      document.getElementById('total').innerText = total;
+      localStorage.setItem('carrito', JSON.stringify(carrito));
+    }
+
+    // Elimina producto o reduce cantidad del carrito
+    function eliminarProducto(index) {
+      if (carrito[index].cantidad > 1) {
+        carrito[index].cantidad--;
+      } else {
+        carrito.splice(index, 1);
+      }
+      actualizarCarrito();
+    }
+
+    // Vacía el carrito
+    function vaciarCarrito() {
+      carrito = [];
+      actualizarCarrito();
+      mostrarMensaje('Carrito vaciado');
+    }
+
+    // Realiza el pago (simulación)
+    function realizarPago() {
+      const metodo = document.getElementById('metodo-pago').value;
+      if (!metodo) {
+        mostrarMensaje('Seleccione un método de pago');
+        return;
+      }
+      mostrarMensaje(`Pago realizado con ${metodo}. ¡Gracias por su compra!`);
+      vaciarCarrito();
+    }
+  </script>
+</body>
+</html>
